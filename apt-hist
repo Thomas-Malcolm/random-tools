@@ -1,0 +1,60 @@
+#!/bin/bash
+
+_usage="Usage: apt-hist [options] 
+
+Peek a history of recently installed packages. Default
+is reverse chronological order.
+	
+Options:
+  -h, --help		This help message
+  -c, --count		Number of packages (Default=10)
+  -r, --reverse		Chronological order
+  -b, --between		Grab between [a,b]
+
+Example:
+  apt-hist -b 3,7
+"
+
+# default dpkg log location
+DPKG_LOG=/var/log/dpkg.log
+
+count=10
+rev=
+fr=
+to=
+
+help () {
+	echo "$_usage";
+	exit 0;
+}
+
+while [ "$1" != "" ]; do
+	case $1 in 
+		-h | --help )		help
+					;;
+		-c | --count )  	shift
+					count="$1"
+					;;
+		-r | --reverse )	rev="1"
+					;;
+		-b | --between )	shift
+					fr=$(echo "$1" | cut -d',' -f1)
+					to=$(echo "$1" | cut -d',' -f2)
+					;;
+		* )			help
+					;;
+	esac
+	shift
+done
+
+
+if ! [ -z "${fr+x}" ]; then
+	grep "install" $DPKG_LOG | tail --lines=+$fr | head -n $(($to-$fr+1)) 
+		exit 0;
+fi
+
+if [ "$rev" = "1" ]; then
+		grep "install" $DPKG_LOG | head -n $count
+else
+		grep "install" $DPKG_LOG | tac | head -n $count
+fi
